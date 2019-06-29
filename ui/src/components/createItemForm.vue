@@ -299,6 +299,7 @@ export default {
           this.itemSaved = true;
           this.sending = false;
           this.clearForm();
+          this.form.name = "Create Item";
         })
         .catch(error => {
           this.itemSaved = false;

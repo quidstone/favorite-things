@@ -200,6 +200,7 @@ export default {
       this.showItems = true;
       this.makeCreateItemFormVisible = false;
       this.makeCreateCategoryFormVisible = false;
+      if (this.categories != null) this.loadCategory(this.categories[0].id);
     }
   }
 };
