@@ -1,7 +1,6 @@
 import unittest
 import json
 from api import create_app
-from api.models import db
 
 
 class ItemModelTestCase(unittest.TestCase):
@@ -22,8 +21,8 @@ class ItemModelTestCase(unittest.TestCase):
             "ranking": 20,
             "category_id": 2,
             "item_meta": {
-                "kind": "cheesy,pepperoni",
-                "place": "pizza-hut"
+                "kind": ["cheesy,pepperoni", "text"],
+                "place": ["pizza-hut", "text"]
             }
         }
         res = self.client.post(
@@ -38,13 +37,13 @@ class ItemModelTestCase(unittest.TestCase):
     def test_item_update(self):
         "testing item update"
         item = {
-            "title": "LA",
+            "title": "pizza",
             "description": "what a nice food, i really like pizza",
             "ranking": 20,
             "category_id": 2,
             "item_meta": {
-                "kind": "cheesy,pepperoni",
-                "place": "pizza-hut"
+                "kind": ["cheesy,pepperoni", "text"],
+                "place": ["pizza-hut", "text"]
             }
         }
         res = self.client.put(

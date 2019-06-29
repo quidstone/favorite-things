@@ -34,6 +34,9 @@ class Item(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    def update(self):
+        db.session.commit()
+
     @staticmethod
     def get_all():
         return Item.query.all()

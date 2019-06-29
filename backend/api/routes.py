@@ -6,8 +6,67 @@ from flask_cors import cross_origin
 import time
 
 # app global variables
-SERVER_ERROR_MSG = '''there is a problem with our server right now, please be 
+SERVER_ERROR_MSG = '''there is a problem with our server right now, please be
 sure to try after some time'''
+
+
+def end_of_loop():
+    raise StopIteration
+
+
+def readjust_ranking(new_rank, previous_rank, category_id, is_firsttime):
+    """updating existing item by ranking in table"""
+    is_descending = False
+    start_at = new_rank
+    stop_at = previous_rank - 1#not affecting previous rank as it should get updated
+    if(not is_firsttime
+       and previous_rank is not None and previous_rank < new_rank):
+        """item rank is descending"""
+        start_at = previous_rank + 1
+        stop_at = new_rank
+        is_descending = True
+
+    if not is_firsttime:
+        query_str = "select ranking from items where ranking >= {}\
+                    and ranking <= {} and category_id={}\
+                    order by ranking asc"\
+        .format(start_at, stop_at, category_id)
+    else:
+        query_str = "select ranking from items where ranking >= {}\
+                    and category_id={}\
+                    order by ranking asc"\
+        .format(start_at, category_id)
+
+    db_items = list(db.engine.execute(query_str))
+    print(query_str)
+    db_item_length = len(db_items)
+    no_diffs_greater_than_one_length = db_item_length - 1
+    list_range=db_item_length-1
+    diffs = list(end_of_loop() if db_items[i]._row[0]-db_items[i]._row[0] > 1
+                 else db_items[i+1]._row[0]-db_items[i]._row[0]
+                 for i in range(list_range))
+
+    """checking if theres a 2 diff in the range"""
+    if(len(diffs) < no_diffs_greater_than_one_length):
+        update_rank_up_to = db_items[len(diffs)]._row[0]
+    else:
+        update_rank_up_to = str(db_items[db_item_length-1]._row[0])
+    stop_update_at = db_items[0]._row[0]
+
+    if not is_descending:
+        update_query = "UPDATE items SET ranking = ranking + 1 WHERE \
+            ranking <={} and ranking >= {} and category_id = {}"\
+            .format(update_rank_up_to, stop_update_at, category_id)
+    else:
+        update_query = "UPDATE items SET ranking = ranking - 1 WHERE \
+            ranking <={} and ranking >= {} and category_id = {}"\
+            .format(update_rank_up_to, stop_update_at, category_id)
+    print(update_query)
+    result = db.engine.execute(update_query)
+
+    # if(result.rowcount):
+    #     return ()
+    return result
 
 
 def init_routes(app):
@@ -26,11 +85,10 @@ def init_routes(app):
     def add_item():
         ranking = request.json['ranking']
         category_id = request.json['category_id']
-        db_item = Item.query.filter_by(
+        same_rank_item = Item.query.filter_by(
             ranking=ranking, category_id=category_id).first()
-        print(type(db_item))
-        if db_item is not None:
-            return jsonify(error="ranking taken,please use another ranking"), 406
+        if same_rank_item is not None:
+            readjust_ranking(int(ranking), None, int(category_id), is_firsttime=True)
         title = request.json['title']
         des = request.json['description']
 
@@ -40,11 +98,12 @@ def init_routes(app):
         try:
             new_item.save()
         except SQLAlchemyError as e:
-            db.session.rollback()
             print(e.args[0])
             errorMsg = SERVER_ERROR_MSG
-            return jsonify(error=errorMsg), 500, {'Content-Type': 'application/json; charset=utf-8'}
-        return (item_schema.jsonify(new_item), 201, {'Content-Type': 'application/json; charset=utf-8'})
+            return jsonify(error=errorMsg),\
+                500, {'Content-Type': 'application/json; charset=utf-8'}
+        return (item_schema.jsonify(new_item),
+                201, {'Content-Type': 'application/json; charset=utf-8'})
 
     # Get All Items
     @app.route('/item', methods=['GET'])
@@ -59,11 +118,9 @@ def init_routes(app):
     @app.route('/category/<id>/items', methods=['GET', 'OPTIONS'])
     def get_items_per_category(id):
         db_category = Category.query.get(id)
-        print(db_category)
         if db_category is None:
             abort(404)
         all_items = Item.query.filter_by(category_id=id)
-        print(type(all_items))
         if all_items.count() == 0:
             return('', 204)
         result = items_schema.dump(all_items)
@@ -77,16 +134,6 @@ def init_routes(app):
             abort(404)
         return item_schema.jsonify(item)
 
-    # get available item rank
-    @app.route('/item/check/availability/<rank>', methods=['GET'])
-    def get_item_rank(rank):
-        db_item = Item.query.filter_by(ranking=rank).first()
-        print(type(db_item))
-        if db_item is None:
-            return "Okay"
-        else:
-            return "Taken", 406
-
     # Update an Item
     @app.route('/item/<id>', methods=['PUT'])
     def update_item(id):
@@ -97,6 +144,12 @@ def init_routes(app):
         desc = request.json['description']
         ranking = request.json['ranking']
         category_id = request.json['category_id']
+        same_rank_item = Item.query.filter_by(ranking=ranking,
+                                              category_id=category_id).first()
+        if same_rank_item is not None:
+            readjust_ranking(int(ranking), int(db_item.ranking),
+                             int(category_id), is_firsttime=False)
+
         item_meta = request.json['item_meta']
 
         db_item.title = title
@@ -108,9 +161,8 @@ def init_routes(app):
         now = time.strftime('%Y-%m-%d %H:%M:%S')
         db_item.modified_date = now
         try:
-            db.session.commit()
+            db_item.update()
         except SQLAlchemyError:
-            db.session.rollback()
             # errorMsg = e.args[0]
             errorMsg = SERVER_ERROR_MSG
             return jsonify(error=errorMsg), 500
@@ -123,8 +175,7 @@ def init_routes(app):
         db_item = Item.query.get(id)
         if db_item is None:
             abort(404)
-        db.session.delete(db_item)
-        db.session.commit()
+        db_item.delete(db_item)
 
         return item_schema.jsonify(db_item)
 
@@ -140,7 +191,6 @@ def init_routes(app):
             db.session.commit()
         except SQLAlchemyError:
             # print(e)
-            db.session.rollback()
             errorMsg = SERVER_ERROR_MSG
             return jsonify(error=errorMsg), 500
 
