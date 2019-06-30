@@ -1,4 +1,4 @@
-from flask import request, jsonify, abort
+from flask import g, request, jsonify, abort
 from api.models import db, Item, Category
 from sqlalchemy.exc import SQLAlchemyError
 from api.schemas import ItemSchema, CategorySchema
@@ -18,7 +18,7 @@ def readjust_ranking(new_rank, previous_rank, category_id, is_firsttime):
     """updating existing item by ranking in table"""
     is_descending = False
     start_at = new_rank
-    stop_at = previous_rank - 1#not affecting previous rank as it should get updated
+    stop_at = previous_rank - 1  # not affecting previous rank as it should get updated
     if(not is_firsttime
        and previous_rank is not None and previous_rank < new_rank):
         """item rank is descending"""
@@ -41,7 +41,7 @@ def readjust_ranking(new_rank, previous_rank, category_id, is_firsttime):
     print(query_str)
     db_item_length = len(db_items)
     no_diffs_greater_than_one_length = db_item_length - 1
-    list_range=db_item_length-1
+    list_range = db_item_length-1
     diffs = list(end_of_loop() if db_items[i]._row[0]-db_items[i]._row[0] > 1
                  else db_items[i+1]._row[0]-db_items[i]._row[0]
                  for i in range(list_range))
@@ -79,6 +79,29 @@ def init_routes(app):
     category_schema = CategorySchema(strict=True)
     categories_schema = CategorySchema(many=True, strict=True)
 
+    @app.before_request
+    def start_timer():
+        g.start = time.time()
+
+    @app.before_request
+    def log_request():
+        # if request.path == '/favicon.ico':
+        #     return response
+        # elif request.path.startswith('/static'):
+        #     return response
+
+        now = time.time()
+        duration = round(now - g.start, 2)
+        #dt = datetime.datetime.fromtimestamp(now)
+        #timestamp = rfc3339(dt, utc=True)
+
+        ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        host = request.host.split(':', 1)[0]
+        print("ip {} host {}".format(ip, host))
+        if request.args:
+            args = dict(request.args)
+            print("args {}", args)
+
     # Create an Item
     @app.route('/item', methods=['POST'])
     @cross_origin(supports_credentials=True)
@@ -88,7 +111,8 @@ def init_routes(app):
         same_rank_item = Item.query.filter_by(
             ranking=ranking, category_id=category_id).first()
         if same_rank_item is not None:
-            readjust_ranking(int(ranking), None, int(category_id), is_firsttime=True)
+            readjust_ranking(int(ranking), None, int(
+                category_id), is_firsttime=True)
         title = request.json['title']
         des = request.json['description']
 
