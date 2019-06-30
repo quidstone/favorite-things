@@ -1,0 +1,44 @@
+{
+    "name": "rahat hosssain samit",
+    "passion": [
+        "to learn",
+        "to solve problems",
+        "to build",
+        "to give back"
+    ],
+    "interests": [
+        "complex systems",
+        "software architecture",
+        "open source",
+        "design",
+        "embedded systems",
+        "web-servers",
+        "AI",
+        "distributed compuling",
+        "Kernel/language Development"
+    ],
+    "languages": [
+        "c++",
+        "c",
+        "python",
+        "java",
+        "javascript"
+    ],
+    "academics": {
+        "high school": "st.josephs high school and college",
+        "college": "notre dame college",
+        "graduation-university": "chittagong university of engineering and technology",
+        "post-graduation": "bangladeh university of engineering and technology(running)"
+    },
+    "books": [
+        "the don",
+        "the sicilian",
+        "the godfather",
+        "harry potter series",
+        "angels and demons",
+        "the alchemist",
+        "..."
+    ],
+    "favourite author": "mario puzo",
+    "favourite-genre": "thriller"
+}
