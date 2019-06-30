@@ -7,7 +7,7 @@
         </md-card-header>
 
         <md-card-content>
-          <md-input name="id" v-model="form.id" hidden/>
+          <md-input name="id" v-model="form.id" hidden />
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('category')">
@@ -27,7 +27,7 @@
           </div>
         </md-card-content>
 
-        <md-progress-bar md-mode="indeterminate" v-if="sending"/>
+        <md-progress-bar md-mode="indeterminate" v-if="sending" />
 
         <md-card-actions>
           <md-button type="submit" class="md-primary" :disabled="sending">Create Category</md-button>
@@ -43,6 +43,7 @@
 import { validationMixin } from "vuelidate";
 import { required } from "vuelidate/lib/validators";
 import axios from "axios";
+import { BASE_URL } from "../consts";
 
 export default {
   name: "FormCreateCategory",
@@ -91,7 +92,7 @@ export default {
       };
       axios({
         method: "post", //you can set what request you want to be
-        url: "http://localhost:5000/category",
+        url: BASE_URL + "/category",
         data: this.payload,
         headers: {
           "Content-Type": "application/json"
@@ -104,7 +105,7 @@ export default {
           this.clearForm();
           this.$emit("submit", response.data);
         })
-        .catch(error => {
+        .catch(() => {
           this.itemSaved = false;
           this.sending = false;
         });

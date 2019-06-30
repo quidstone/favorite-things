@@ -1,5 +1,24 @@
 <template>
   <div id="app">
+    <div>
+      <md-dialog :md-active.sync="noCategory">
+        <md-dialog-title>Hey, wait...</md-dialog-title>
+        <md-tabs md-dynamic-height>
+          <md-tab md-label="General">
+            <p>You are seeing this because I dont have any category yet. Please add a category and then add items using the speed-dial on top, Okay?</p>
+          </md-tab>
+          <md-tab md-label="Category info">
+            <p>Category can only be created at this moment.Edit,delete is coming soon!</p>
+          </md-tab>
+          <md-tab md-label="Item info">
+            <p>Items can be created,editted,deleted</p>
+          </md-tab>
+        </md-tabs>
+        <md-dialog-actions>
+          <md-button class="md-primary" @click="noCategory = false">okay</md-button>
+        </md-dialog-actions>
+      </md-dialog>
+    </div>
     <md-tabs v-if="showItems">
       <md-tab
         v-bind:key="category.id"
@@ -72,7 +91,7 @@
       </md-speed-dial-target>
 
       <md-speed-dial-content>
-        <md-button class="md-icon-button" @click="addItem">
+        <md-button class="md-icon-button" @click="addItem" v-if="this.showItemAdd">
           <md-icon>subject</md-icon>
           <md-tooltip md-direction="left">add item</md-tooltip>
         </md-button>
@@ -100,6 +119,7 @@
 import FormCreateItem from "./components/createItemForm.vue";
 import FormCreateCategory from "./components/createCategoryForm.vue";
 import axios from "axios";
+import { BASE_URL } from "./consts";
 
 export default {
   name: "app",
@@ -108,6 +128,8 @@ export default {
     FormCreateCategory
   },
   data: () => ({
+    showItemAdd: true,
+    noCategory: false,
     dialogueId: null,
     dialogueAction: null,
     dialogueMsg: null,
@@ -125,12 +147,17 @@ export default {
 
   created() {
     axios
-      .get("http://localhost:5000/category")
+      .get(BASE_URL + "/category")
       .then(res => {
         this.categories = res.data;
         this.loadCategory(this.categories[0].id);
+        this.noCategory = false;
+        this.showItemAdd = true;
       })
-      .catch(error => {});
+      .catch(error => {
+        this.noCategory = true;
+        this.showItemAdd = false;
+      });
   },
   mounted() {
     //this.loadCategory();
@@ -142,7 +169,7 @@ export default {
     },
     loadCategory(id) {
       axios
-        .get("http://localhost:5000/category/" + id + "/items")
+        .get(BASE_URL + "/category/" + id + "/items")
         .then(res => {
           this.stuffs = res.data;
         })
@@ -172,7 +199,7 @@ export default {
         this.activeItem = this.stuffs.filter(item => item.id == this.itemId);
       } else if (this.dialogueAction == "DELETE") {
         axios
-          .delete("http://localhost:5000/item/" + this.itemId)
+          .delete(BASE_URL + "/item/" + this.itemId)
           .then(res => {
             this.stuffs.splice(
               this.stuffs.findIndex(s => s.id === this.itemId),
@@ -200,7 +227,10 @@ export default {
       this.showItems = true;
       this.makeCreateItemFormVisible = false;
       this.makeCreateCategoryFormVisible = false;
-      if (this.categories != null) this.loadCategory(this.categories[0].id);
+      if (this.categories != null) {
+        this.showItemAdd = true;
+        this.loadCategory(this.categories[0].id);
+      }
     }
   }
 };

@@ -199,7 +199,7 @@ def init_routes(app):
         db_item = Item.query.get(id)
         if db_item is None:
             abort(404)
-        db_item.delete(db_item)
+        db_item.delete()
 
         return item_schema.jsonify(db_item)
 

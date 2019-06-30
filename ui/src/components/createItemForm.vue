@@ -7,12 +7,12 @@
         </md-card-header>
 
         <md-card-content>
-          <md-input name="id" v-model="form.id" hidden/>
+          <md-input name="id" v-model="form.id" hidden />
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('title')">
                 <label for="title">Title</label>
-                <md-input name="title" id="title" v-model="form.title" :disabled="sending"/>
+                <md-input name="title" id="title" v-model="form.title" :disabled="sending" />
                 <span class="md-error" v-if="!$v.form.title.required">The title is required</span>
               </md-field>
             </div>
@@ -46,7 +46,10 @@
                   :disabled="sending"
                 />
 
-                <span class="md-error" v-if="!$v.form.ranking.maxvalue">Ranking maxvalue is 100</span>
+                <span
+                  class="md-error"
+                  v-if="!$v.form.ranking.maxvalue"
+                >minimum value for ranking is 1</span>
                 <span class="md-error" v-else-if="!$v.form.ranking.required">Ranking is required</span>
               </md-field>
             </div>
@@ -118,7 +121,7 @@
                   <md-table-cell>
                     <md-field>
                       <!-- <label>Key</label> -->
-                      <md-input type="text" v-model="form.metadata[index].key"/>
+                      <md-input type="text" v-model="form.metadata[index].key" />
                       <span class="md-helper-text">Key</span>
                     </md-field>
                   </md-table-cell>
@@ -148,7 +151,7 @@
           </div>
         </md-card-content>
 
-        <md-progress-bar md-mode="indeterminate" v-if="sending"/>
+        <md-progress-bar md-mode="indeterminate" v-if="sending" />
 
         <md-card-actions>
           <md-button
@@ -167,8 +170,9 @@
 
 <script>
 import { validationMixin } from "vuelidate";
-import { required, minLength, maxValue } from "vuelidate/lib/validators";
+import { required, minLength, minValue } from "vuelidate/lib/validators";
 import axios from "axios";
+import { BASE_URL } from "../consts";
 
 export default {
   name: "FormCreateItem",
@@ -179,7 +183,7 @@ export default {
     $props: {
       deep: true,
       immediate: true,
-      handler(val, oldVal) {
+      handler(val) {
         this.val = val;
         this.injectItem(this.active_item[0]);
       }
@@ -213,7 +217,8 @@ export default {
         minLength: minLength(10)
       },
       ranking: {
-        required
+        required,
+        minValue: minValue(1)
       },
       category: {
         required
@@ -280,11 +285,11 @@ export default {
         category_id: this.form.category
       };
       var axios_method = "post";
-      var url = "http://localhost:5000/item";
+      var url = BASE_URL + "/item";
 
       if (this.form.id !== null) {
         axios_method = "put";
-        url = "http://localhost:5000/item/" + this.form.id;
+        url = BASE_URL + "/item/" + this.form.id;
       }
       axios({
         method: axios_method, //you can set what request you want to be
@@ -294,14 +299,14 @@ export default {
           "Content-Type": "application/json"
         }
       })
-        .then(response => {
+        .then(() => {
           this.lastItem = `${this.form.title}`;
           this.itemSaved = true;
           this.sending = false;
           this.clearForm();
           this.form.name = "Create Item";
         })
-        .catch(error => {
+        .catch(() => {
           this.itemSaved = false;
           this.sending = false;
         });
