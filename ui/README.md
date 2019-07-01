@@ -2,24 +2,27 @@
 
 ## Project structure
 
-.
-├── babel.config.js
-├── package.json
-├── package-lock.json
-├── public
-    ├── favicon.ico
-    └── index.html
-├── README.md
-└── src
-    ├── App.vue
-    ├── assets
-    │   └── logo.png
-    ├── aws-exports.js
-    ├── components
-    │   ├── createCategoryForm.vue
-    │   └── createItemForm.vue
-    ├── consts.js
-    └── main.js
+```
+    .
+    ├── babel.config.js
+    ├── package.json
+    ├── package-lock.json
+    ├── public
+        ├── favicon.ico
+        └── index.html
+    ├── README.md
+    └── src
+        ├── App.vue
+        ├── assets
+        │   └── logo.png
+        ├── aws-exports.js
+        ├── components
+        │   ├── createCategoryForm.vue
+        │   └── createItemForm.vue
+        ├── consts.js
+        └── main.js
+
+```
 
 ## concept
 
