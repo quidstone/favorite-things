@@ -1,5 +1,5 @@
 # backend - favorite_things
-
+```
  structure
     this projects structure is the following:
     .
@@ -12,6 +12,7 @@
     ├── requirements.txt
     ├── run.py
     └── tests.py
+```
 
 ## concept
 
